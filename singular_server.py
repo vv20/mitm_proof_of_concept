@@ -10,9 +10,82 @@ from scscp import scscp
 
 import PySingular as sing
 
+from termcolor import colored
+
+false_sym = om.OMSymbol("false", "logic1")
+true_sym = om.OMSymbol("true", "logic1")
+int_ring_sym = om.OMSymbol("integers", "ring3")
+sdmp_sym = om.OMSymbol("SDMP", "polyd")
+term_sym = om.OMSymbol("term", "polyd")
+poly_ring_sym = om.OMSymbol("poly_ring_d_named", "polyd")
+dmp_sym = om.OMSymbol("DMP", "polyd")
+
 def poly_eq(data):
-    print("polyeq")
-    return None
+    if (len(data) != 2):
+        raise TypeError
+    poly1 = data[0]
+    poly2 = data[1]
+    ring1 = poly1.arguments[0]
+    ring2 = poly2.arguments[0]
+    sdmp1 = poly1.arguments[1]
+    sdmp2 = poly2.arguments[1]
+    terms1 = sdmp1.arguments
+    terms2 = sdmp2.arguments
+
+    # if the polynomials are not defined over the same ring they cannot be equal
+    if ring1 != ring2:
+        return false_sym
+
+    # only support integer ring for coefficients for now
+    if ring1.arguments[0] != int_ring_sym:
+        raise TypeError
+
+    variables = []
+    for i in range(1, len(ring1.arguments)):
+        variables.append(ring1.arguments[i].name)
+
+    command = "ring r = 0, ("
+    for v in variables:
+        command += v
+        command += ","
+    command = command[:-1]
+    command += "), lp;"
+    # initialise the ring
+    print(colored(command, "green"))
+    sing.RunSingularCommand(command)
+
+    command = "poly p1 = "
+    for term in terms1:
+        for i in range(0, len(variables)):
+            command += str(term.arguments[i].integer)
+            command += variables[i]
+        command += str(term.arguments[-1].integer)
+        command += "+"
+    # to remove the last plus
+    command = command[:-1]
+    command += ";"
+    print(colored(command, "green"))
+    sing.RunSingularCommand(command)
+
+    command = "poly p2 = "
+    for term in terms2:
+        for i in range(0, len(variables)):
+            command += str(term.arguments[i].integer)
+            command += variables[i]
+        command += str(term.arguments[-1].integer)
+        command += "+"
+    # to remove the last plus
+    command = command[:-1]
+    command += ";"
+    print(colored(command, "green"))
+    sing.RunSingularCommand(command)
+
+    result = sing.RunSingularCommand("p1 == p2;")
+    print(colored(result, "green"))
+    if result[1][0] == '1':
+        return true_sym
+    else:
+        return false_sym
 
 def ideal(data):
     print("ideaL")
@@ -79,10 +152,10 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
             if call.data.elem.cd == 'scscp2' and head in CD_SCSCP2:
                 res = getattr(self, head)(call.data)
             elif call.data.elem.cd == 'scscp_trans_1' and head in CD_SCSCP_TRANS:
-                args = [conv.to_python(a) for a in call.data.arguments]
+                #args = [conv.to_python(a) for a in call.data.arguments]
+                args = call.data.arguments
                 handler = get_handler(head)
-                res_sym = handler(args)
-                res = conv.to_openmath(res_sym)
+                res = handler(args)
             else:
                 self.log.debug('...head unknown.')
                 return self.scscp.terminated(call.id, om.OMError(
@@ -135,6 +208,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger('singular_server')
     srv = Server(logger=logger)
+
+    sing.InitializeSingular("/usr/bin/Singular")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
