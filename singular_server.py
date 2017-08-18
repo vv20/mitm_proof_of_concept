@@ -195,7 +195,7 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
 class Server(socketserver.ThreadingMixIn, socketserver.TCPServer, object):
     allow_reuse_address = True
     
-    def __init__(self, host='localhost', port=26133,
+    def __init__(self, host='localhost', port=26135,
                      logger=None, name=b'SingularServer', version=b'0.0.1',
                      description='Singular SCSCP Server'):
         super(Server, self).__init__((host, port), SCSCPRequestHandler)
