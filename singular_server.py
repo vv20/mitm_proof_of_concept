@@ -11,6 +11,7 @@ from scscp import scscp
 import PySingular as sing
 
 from termcolor import colored
+import traceback
 
 false_sym = om.OMSymbol("false", "logic1")
 true_sym = om.OMSymbol("true", "logic1")
@@ -32,21 +33,20 @@ def poly_eq(data):
     terms1 = sdmp1.arguments
     terms2 = sdmp2.arguments
 
-    # if the polynomials are not defined over the same ring they cannot be equal
-    if ring1 != ring2:
-        return false_sym
-
     # only support integer ring for coefficients for now
     if ring1.arguments[0] != int_ring_sym:
         raise TypeError
 
     variables = []
-    for i in range(1, len(ring1.arguments)):
-        variables.append(ring1.arguments[i].name)
+    for v in ring1.arguments[1:]:
+        variables.append(v)
+    for v in ring2.arguments[1:]:
+        if v not in variables:
+            variables.append(v)
 
     command = "ring r = 0, ("
     for v in variables:
-        command += v
+        command += v.name
         command += ","
     command = command[:-1]
     command += "), lp;"
@@ -56,9 +56,9 @@ def poly_eq(data):
 
     command = "poly p1 = "
     for term in terms1:
-        for i in range(0, len(variables)):
-            command += str(term.arguments[i].integer)
-            command += variables[i]
+        for i in range(1, len(ring1.arguments)):
+            command += str(term.arguments[i-1].integer)
+            command += ring1.arguments[i].name
         command += str(term.arguments[-1].integer)
         command += "+"
     # to remove the last plus
@@ -69,9 +69,9 @@ def poly_eq(data):
 
     command = "poly p2 = "
     for term in terms2:
-        for i in range(0, len(variables)):
-            command += str(term.arguments[i].integer)
-            command += variables[i]
+        for i in range(1, len(ring2.arguments)):
+            command += str(term.arguments[i-1].integer)
+            command += ring2.arguments[i].name
         command += str(term.arguments[-1].integer)
         command += "+"
     # to remove the last plus
@@ -82,26 +82,19 @@ def poly_eq(data):
 
     result = sing.RunSingularCommand("p1 == p2;")
     print(colored(result, "green"))
-    if result[1][0] == '1':
-        return true_sym
-    else:
+    if result[1][0] == '0':
         return false_sym
-
-def ideal(data):
-    print("ideaL")
-    return None
+    else:
+        return true_sym
 
 # Supported functions
 CD_SCSCP2 = ['get_service_description', 'get_allowed_heads', 'is_allowed_head', 'get_signature']
 CD_SCSCP_TRANS = [
-        'polynomial_eq',
-        'ideal'
+        'polynomial_eq'
 ]
 
 def get_handler(head):
-    if head == "ideal":
-        return ideal
-    elif head == "polynomial_eq":
+    if head == "polynomial_eq":
         return poly_eq
     else:
         return None
@@ -165,6 +158,7 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
             self.log.debug('...sending result: %s' % (strlog[:20] + (len(strlog) > 20 and '...')))
             return self.scscp.completed(call.id, res)
         except (AttributeError, IndexError, TypeError) as e:
+            print(traceback.format_exc())
             self.log.debug('...client protocol error.')
             return self.scscp.terminated(call.id, om.OMError(
                 om.OMSymbol('unexpected_symbol', cd='error'), [call.data]))
