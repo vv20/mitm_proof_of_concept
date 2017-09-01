@@ -10,9 +10,6 @@ from scscp import scscp
 
 import PySingular as sing
 
-from termcolor import colored
-import traceback
-
 false_sym = om.OMSymbol("false", "logic1")
 true_sym = om.OMSymbol("true", "logic1")
 int_ring_sym = om.OMSymbol("integers", "ring3")
@@ -51,7 +48,6 @@ def poly_eq(data):
     command = command[:-1]
     command += "), lp;"
     # initialise the ring
-    print(colored(command, "green"))
     sing.RunSingularCommand(command)
 
     command = "poly p1 = "
@@ -64,7 +60,6 @@ def poly_eq(data):
     # to remove the last plus
     command = command[:-1]
     command += ";"
-    print(colored(command, "green"))
     sing.RunSingularCommand(command)
 
     command = "poly p2 = "
@@ -77,11 +72,9 @@ def poly_eq(data):
     # to remove the last plus
     command = command[:-1]
     command += ";"
-    print(colored(command, "green"))
     sing.RunSingularCommand(command)
 
     result = sing.RunSingularCommand("p1 == p2;")
-    print(colored(result, "green"))
     if result[1][0] == '0':
         return false_sym
     else:
@@ -158,7 +151,6 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
             self.log.debug('...sending result: %s' % (strlog[:20] + (len(strlog) > 20 and '...')))
             return self.scscp.completed(call.id, res)
         except (AttributeError, IndexError, TypeError) as e:
-            print(traceback.format_exc())
             self.log.debug('...client protocol error.')
             return self.scscp.terminated(call.id, om.OMError(
                 om.OMSymbol('unexpected_symbol', cd='error'), [call.data]))
