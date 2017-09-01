@@ -1,0 +1,32 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usepackage[backend=biber]{biblatex}
+
+%dev requirements
+\usepackage{todonotes}
+\addbibresource{bib.bib}
+
+\title{Summer 2017 Internship Report}
+\author{Victor Vasilyev}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+  \includegraphics[scale = 0.5]{eu.jpg}
+\end{center}
+
+\input{intro.tex}
+\input{mmt_groups.tex}
+\input{mitm_poc.tex}
+\input{conclusion.tex}
+
+\section{Acknowledgement}
+I acknowledge financial support from the OpenDreamKit Horizon 2020 European Research Infrastructures project (\#676541).
+
+\printbibliography
+
+\end{document}

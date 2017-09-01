@@ -1,0 +1,28 @@
+\section{Conclusion}
+\subsection{Evaluation of the Study}
+This study has implemented the MitM approach using SCSCP, showing that the MitM 
+paradigm is an achievable goal. Currently, however, the MitM server acts as 
+merely a proxy, redirecting SCSCP requests to CAS that know how to evaluate them.
+For MitM to be a truly modular abstract algebra environment, the following
+changes must be made:
+\begin{itemize}
+  \item A peer-to-peer connection must be made with the CAS servers instead of a simple client-serve one, so that
+    CAS servers can, in turn, query MitM if during a computation they encounter 
+    a concept that lies outside their field of knowledge. In application to
+    this particular case, it would be cleaner if, instead of asking MitM to 
+    produce permutations of a list, the client simply queries MitM for the orbit 
+    of a polynomial by defining an action of a member of the symmetric group on a 
+    polynomial. GAP would then be able to calculate the orbit by making the group 
+    act on the polynomial with the described action and querying MitM for 
+    equality of polynomials, resulting in a linear-time algorithm instead of
+    quadratic-time behaviour displayed by the current client.
+  \item Alignment between CAS servers and the MitM server must be automated.
+    Although manual alignment as described in this case study is usable and
+    enables pinpoint alignments to be made, it is not scalable. Any CAS that aims
+    to be MitM-compatible should develop a representation of its type system
+    in MMT, so that, upon establishing a connection with a new CAS system, the 
+    MitM server would be able to automatically align newly accessible functions 
+    with symbols from public CDs. This will also enable MMT to act as more than
+    a routing proxy, as it would be able to typecheck the arguments of incoming
+    requests, making the MitM system more rigid.
+\end{itemize}
