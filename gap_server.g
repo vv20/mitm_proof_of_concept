@@ -30,6 +30,20 @@ InstallSCSCPprocedure("orbit_of_list",
   end
 );
 
+OnMultivariatePolynomialsVariables := function(poly, perm)
+  local i,j, extrep, fam;
+  fam := FamilyObj(poly);
+  extrep := MutableCopyMat(ExtRepPolynomialRatFun(poly));
+  for i in [1,3..Length(extrep)-1] do
+    for j in [1,3..Length(extrep[i]) - 1] do
+      extrep[i][j] := extrep[i][j]^perm;
+    od;
+  od;
+  return PolynomialByExtRep(fam, extrep);
+end;
+
 InstallSCSCPprocedure("SymmetricGroup", SymmetricGroup);
+InstallSCSCPprocedure("OnMultivariatePolynomialsVariables", OnMultivariatePolynomialsVariables);
+
 
 RunSCSCPserver( SCSCPserverAddress, 26134);

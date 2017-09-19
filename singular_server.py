@@ -10,6 +10,11 @@ from scscp import scscp
 
 import PySingular as sing
 
+import poly_parsing as parse
+
+import traceback
+from termcolor import colored
+
 false_sym = om.OMSymbol("false", "logic1")
 true_sym = om.OMSymbol("true", "logic1")
 int_ring_sym = om.OMSymbol("integers", "ring3")
@@ -18,30 +23,51 @@ term_sym = om.OMSymbol("term", "polyd")
 poly_ring_sym = om.OMSymbol("poly_ring_d_named", "polyd")
 dmp_sym = om.OMSymbol("DMP", "polyd")
 
-def poly_eq(data):
-    if (len(data) != 2):
-        raise TypeError
-    poly1 = data[0]
-    poly2 = data[1]
-    ring1 = poly1.arguments[0]
-    ring2 = poly2.arguments[0]
-    sdmp1 = poly1.arguments[1]
-    sdmp2 = poly2.arguments[1]
-    terms1 = sdmp1.arguments
-    terms2 = sdmp2.arguments
+def makename():
+    name = ""
+    no = makename.var_counter
+    while no > 0:
+        remainder = no % 26
+        no = no // 26
+        name += chr(97 + remainder)
+    makename.var_counter += 1
+    return name
+makename.var_counter = 1
 
-    # only support integer ring for coefficients for now
-    if ring1.arguments[0] != int_ring_sym:
-        raise TypeError
+def retrieve_poly(name):
+    output = sing.RunSingularCommand(name + ";")[1]
+    return parse.parse_polynomial(output)
 
-    variables = []
-    for v in ring1.arguments[1:]:
-        variables.append(v)
-    for v in ring2.arguments[1:]:
-        if v not in variables:
-            variables.append(v)
+def retrieve_int(name):
+    return om.OMInteger(int(sing.RunSingularCommand(name + ";")[1][:-1]))
 
-    command = "ring r = 0, ("
+def retrieve_ideal(name):
+    # TODO implement
+    return None
+
+def retrieve(name):
+    # cut off the final symbol which is newline
+    var_type = sing.RunSingularCommand("typeof(" + name + ");")[1][:-1]
+    print(colored(var_type, "red"))
+    if var_type == "poly":
+        return retrieve_poly(name)
+    elif var_type == "int":
+        return retrieve_int(name)
+    elif var_type == "ideal":
+        return retrieve_ideal(name)
+    else:
+        return None
+
+class poly_info:
+    def __init__(self, data):
+        poly = data
+        self.ring = poly.arguments[0]
+        self.sdmp = poly.arguments[1]
+        self.terms = self.sdmp.arguments
+        self.variables = self.ring.arguments[1:]
+
+def ring_ctor(ring_name, variables):
+    command = "ring " + ring_name + " = 0, ("
     for v in variables:
         command += v.name
         command += ","
@@ -50,11 +76,12 @@ def poly_eq(data):
     # initialise the ring
     sing.RunSingularCommand(command)
 
-    command = "poly p1 = "
-    for term in terms1:
-        for i in range(1, len(ring1.arguments)):
+def poly_ctor(poly_name, terms, ring):
+    command = "poly " + poly_name + " = "
+    for term in terms:
+        for i in range(1, len(ring.arguments)):
             command += str(term.arguments[i-1].integer)
-            command += ring1.arguments[i].name
+            command += ring.arguments[i].name
         command += str(term.arguments[-1].integer)
         command += "+"
     # to remove the last plus
@@ -62,44 +89,78 @@ def poly_eq(data):
     command += ";"
     sing.RunSingularCommand(command)
 
-    command = "poly p2 = "
-    for term in terms2:
-        for i in range(1, len(ring2.arguments)):
-            command += str(term.arguments[i-1].integer)
-            command += ring2.arguments[i].name
-        command += str(term.arguments[-1].integer)
-        command += "+"
-    # to remove the last plus
-    command = command[:-1]
-    command += ";"
-    sing.RunSingularCommand(command)
+def poly_eq(name, data):
+    if (len(data) != 2):
+        raise TypeError
+    poly1 = poly_info(data[0])
+    poly2 = poly_info(data[1])
 
-    result = sing.RunSingularCommand("p1 == p2;")
-    if result[1][0] == '0':
-        return false_sym
-    else:
-        return true_sym
+    # only support integer ring for coefficients for now
+    if poly1.ring.arguments[0] != int_ring_sym:
+        raise TypeError
+
+    variables = []
+    for v in poly1.variables:
+        variables.append(v)
+    for v in poly2.variables:
+        if v not in variables:
+            variables.append(v)
+
+    ring_ctor("r", variables)
+    poly_ctor("p1", poly1.terms, poly1.ring)
+    poly_ctor("p2", poly2.terms, poly2.ring)
+
+    result = sing.RunSingularCommand("int " + name + " = p1 == p2;")[1]
+
+def polynomial(name, data):
+    poly = poly_info(data[0])
+
+    ring_ctor("r", poly.variables)
+    poly_ctor(name, poly.terms, poly.ring)
+
+def ideal(name, data):
+    poly = poly_info(data)
+    ring_ctor("r", poly.variables)
+    poly_ctor("p", poly.terms, poly.ring)
+
+    sing.RunSingularCommand("ideal " + name + " = ideal(p)")
+
+def groebner(name, data):
+    poly = poly_info(data)
+    ring_ctor("r", poly.variables)
+    poly_ctor("p", poly.terms, poly.ring)
+
+    sing.RunSingularCommand("ideal " + name + " = groebner(p)")
+
+def dimension(data):
+    poly = poly_info(data)
+    ring_ctor("r", poly.variables)
+    poly_ctor("p", poly.terms, poly.ring)
+
+    sing.RunSingularCommand("int " + name + " = dim(p)")
 
 # Supported functions
 CD_SCSCP2 = ['get_service_description', 'get_allowed_heads', 'is_allowed_head', 'get_signature']
-CD_SCSCP_TRANS = [
-        'polynomial_eq'
+CD_SINGULAR = [
+        'polynomial_eq',
+        'polynomial',
+        'ideal',
+        'groebner'
 ]
 
 def get_handler(head):
     if head == "polynomial_eq":
         return poly_eq
+    elif head == "polynomial":
+        return polynomial
+    elif head == "ideal":
+        return ideal
+    elif head == "groebner":
+        return groebner
+    elif head == "dimension":
+        return dimension
     else:
         return None
-
-headers = [
-        om.OMSymbol("get_service_description", "scscp2"),
-        om.OMSymbol("get_allowed_heads", "scscp2"),
-        om.OMSymbol("is_allowed_head", "scscp2"),
-        om.OMSymbol("get_signature", "scscp2"),
-        om.OMSymbol("polynomial_eq", "scscp_trans_1"),
-        om.OMSymbol("ideal", "scscp_trans_1")
-        ]
 
 class SCSCPRequestHandler(socketserver.BaseRequestHandler):
     def setup(self):
@@ -137,20 +198,24 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
             
             if call.data.elem.cd == 'scscp2' and head in CD_SCSCP2:
                 res = getattr(self, head)(call.data)
-            elif call.data.elem.cd == 'scscp_trans_1' and head in CD_SCSCP_TRANS:
+            elif call.data.elem.cd == 'singular' and head in CD_SINGULAR:
                 #args = [conv.to_python(a) for a in call.data.arguments]
                 args = call.data.arguments
                 handler = get_handler(head)
-                res = handler(args)
+                name = makename()
+                handler(name, args)
+                res = retrieve(name)
             else:
                 self.log.debug('...head unknown.')
                 return self.scscp.terminated(call.id, om.OMError(
                     om.OMSymbol('unhandled_symbol', cd='error'), [call.data.elem]))
 
             strlog = str(res)
+            print(colored(strlog, "green"))
             self.log.debug('...sending result: %s' % (strlog[:20] + (len(strlog) > 20 and '...')))
             return self.scscp.completed(call.id, res)
         except (AttributeError, IndexError, TypeError) as e:
+            traceback.print_exc()
             self.log.debug('...client protocol error.')
             return self.scscp.terminated(call.id, om.OMError(
                 om.OMSymbol('unexpected_symbol', cd='error'), [call.data]))
@@ -161,7 +226,7 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
 
     def get_allowed_heads(self, data):
         return scscp.symbol_set([om.OMSymbol(head, cd='scscp2') for head in CD_SCSCP2]
-                                    + [om.OMSymbol(head, cd='scscp_trans_1') for head in CD_SCSCP_TRANS],
+                                    + [om.OMSymbol(head, cd='singular') for head in CD_SINGULAR],
                                     cdnames=['scscp1'])
     
     def is_allowed_head(self, data):
