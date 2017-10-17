@@ -241,7 +241,7 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
                                              self.server.description)
 
     def get_signature(self, data):
-        return om.OMApplication(om.OMSymbol("symbol_set", "scscp2"), headers)
+        return om.OMApplication(om.OMSymbol("symbol_set", "scscp2"), [])
 
 class Server(socketserver.ThreadingMixIn, socketserver.TCPServer, object):
     allow_reuse_address = True

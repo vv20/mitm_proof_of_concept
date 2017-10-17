@@ -27,10 +27,10 @@ mmt_client.heads.mitm_transient.registerFunction([gap_server, gap_symgroup_sym, 
 mmt_client.heads.mitm_transient.registerFunction([gap_server, gap_orbit_sym, glob_orbit_sym])
 
 print("connecting singular functions")
-mmt_client.heads.mitm_transient.registerFunction([sing_server, sing_poly_sym, glob_poly_sym)
-mmt_client.heads.mitm_transient.registerFunction([sing_server, sing_ideal_sym, glob_ideal_sym)
-mmt_client.heads.mitm_transient.registerFunction([sing_server, sing_groebner_sym, glob_groebner_sym)
-mmt_client.heads.mitm_transient.registerEquality([sing_server, sing_poly_eq, poly_sym])
+#mmt_client.heads.mitm_transient.registerFunction([sing_server, sing_poly_sym, glob_poly_sym])
+#mmt_client.heads.mitm_transient.registerFunction([sing_server, sing_ideal_sym, glob_ideal_sym])
+#mmt_client.heads.mitm_transient.registerFunction([sing_server, sing_groebner_sym, glob_groebner_sym])
+mmt_client.heads.mitm_transient.registerEquality([sing_server, sing_poly_eq, glob_poly_sym])
 
 print("done")
 mmt_client.quit()
