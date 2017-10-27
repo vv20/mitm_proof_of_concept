@@ -1,6 +1,8 @@
 shopt -s expand_aliases
 source ~/.bash_aliases
 
+echo "starting the MMT server..."
+mmt --file mitm_server.msl &
 echo "starting the gap server..."
 gap gap_server.g > gap.log &
 echo "starting the singular server..."
