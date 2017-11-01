@@ -5,7 +5,7 @@
 
 
 import pycparser
-
+import json
 
 # In[31]:
 
@@ -155,4 +155,4 @@ for entry in assignments:
     func["name"] = func["arguments"][0] + "_assign_to_" + func["res"]
     funcs.append(func)
 
-print(funcs)
+print(json.dumps(funcs))
