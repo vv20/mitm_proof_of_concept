@@ -21,29 +21,25 @@ RUN sudo add-apt-repository -y ppa:openjdk-r/ppa
 RUN sudo apt-get update
 RUN sudo apt-get install -y python3-setuptools python3-dev bc openjdk-8-jre sbt
 RUN sudo easy_install3 pip
-RUN sudo pip3 install PySingular
+RUN sudo pip3 install PySingular scscp
 RUN sudo update-java-alternatives --set /usr/lib/jvm/java-1.8.0-openjdk-amd64
 
 # install mmt
-RUN cd ~
-RUN git clone https://github.com/UniFormal/MMT
-RUN cd MMT/src
-RUN sbt deploy
-
-# set up the environment using the alias file
-RUN cd
-COPY .bash_aliases ~/.bash_aliases
-RUN . .bashrc
+#RUN git clone https://github.com/UniFormal/MMT
+#RUN cd MMT/src
+#RUN sbt -sbt-version 0.13.6 deploy
+COPY mmt.jar mmt.jar
 
 # copy the files into the image
-RUN mkdir system
-COPY ControllingClient.py ~/system/ControllingClient.py
-COPY gap_server.g ~/system/gap_server.g
-COPY mitm_server.msl ~/system/mitm_server.msl
-COPY poly_parsing.py ~/system/poly_parsing.py
-COPY singular_server.py ~/system/singular_server.py
-COPY system.sh ~/system/system.sh
+COPY ControllingClient.py ControllingClient.py
+COPY gap_server.g gap_server.g
+COPY mitm_server.msl mitm_server.msl
+COPY poly_parsing.py poly_parsing.py
+COPY singular_server.py singular_server.py
 
-# run the lot
-RUN cd system
-RUN ./system.sh
+# put the instructions to start the servers into the bashrc file
+RUN echo "java -jar mmt.jar --file mitm_server.msl &" >> .bashrc
+RUN echo "~/gap/bin/gap.sh gap_server.g &" >> .bashrc
+RUN echo "python3 singular_server.py &" >> .bashrc
+RUN echo "sleep 5" >> .bashrc
+RUN echo "python3 ControllingClient.py" >> .bashrc
