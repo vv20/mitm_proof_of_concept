@@ -36,6 +36,7 @@ COPY gap_server.g gap_server.g
 COPY mitm_server.msl mitm_server.msl
 COPY poly_parsing.py poly_parsing.py
 COPY singular_server.py singular_server.py
+COPY system.sh system.sh
 
 # put the instructions to start the servers into the bashrc file
 RUN echo "java -jar mmt.jar --file mitm_server.msl &" >> .bashrc
@@ -43,3 +44,5 @@ RUN echo "~/gap/bin/gap.sh gap_server.g &" >> .bashrc
 RUN echo "python3 singular_server.py &" >> .bashrc
 RUN echo "sleep 5" >> .bashrc
 RUN echo "python3 ControllingClient.py" >> .bashrc
+
+EXPOSE 26133
