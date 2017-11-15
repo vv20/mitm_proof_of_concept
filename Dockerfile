@@ -23,8 +23,9 @@ COPY mitm_server.msl mitm_server.msl
 COPY poly_parsing.py poly_parsing.py
 COPY singular_server.py singular_server.py
 COPY docker_system.sh system.sh
-
-# put the instructions to start the servers into the bashrc file
-RUN echo "sh system.sh" >> .bashrc
+COPY QueryingClient.ipynb QueryingClient.ipynb
 
 EXPOSE 26133
+EXPOSE 8888
+
+CMD sh system.sh
