@@ -24,6 +24,7 @@ COPY poly_parsing.py poly_parsing.py
 COPY docker_singular_server.py singular_server.py
 COPY docker_system.sh system.sh
 COPY QueryingClient.ipynb QueryingClient.ipynb
+COPY DihedralExample.ipynb DihedralExample.ipynb
 
 EXPOSE 26133
 EXPOSE 8888

@@ -51,6 +51,7 @@ OnMultivariatePolynomialsVariables := function(poly, perm)
 end;
 
 OMsymRecord.gap1 := rec( OnMultivariatePolynomialsVariables := OnMultivariatePolynomialsVariables );
+OMsymRecord.gap1.IsPermGroup := IsPermGroup;
 
 InstallSCSCPprocedure("SymmetricGroup", SymmetricGroup);
 InstallSCSCPprocedure("DihedralGroup", DihedralGroup);

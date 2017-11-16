@@ -18,10 +18,11 @@ from termcolor import colored
 false_sym = om.OMSymbol("false", "logic1")
 true_sym = om.OMSymbol("true", "logic1")
 int_ring_sym = om.OMSymbol("integers", "ring3")
-sdmp_sym = om.OMSymbol("SDMP", "polyd1")
-term_sym = om.OMSymbol("term", "polyd1")
-poly_ring_sym = om.OMSymbol("poly_ring_d_named", "polyd1")
-dmp_sym = om.OMSymbol("DMP", "polyd1")
+sdmp_sym = om.OMSymbol("SDMP", "polyd")
+term_sym = om.OMSymbol("term", "polyd")
+poly_ring_sym = om.OMSymbol("poly_ring_d_named", "polyd")
+dmp_sym = om.OMSymbol("DMP", "polyd")
+list_sym = om.OMSymbol("list", "list1")
 
 def makename():
     name = ""
@@ -42,8 +43,13 @@ def retrieve_int(name):
     return om.OMInteger(int(sing.RunSingularCommand(name + ";")[1][:-1]))
 
 def retrieve_ideal(name):
-    # TODO implement
-    return None
+    output = sing.RunSingularCommand(name + ";")[1]
+    poly_lines = output.splitlines()
+    polys = []
+    for poly_line in poly_lines:
+        print(colored(poly_line.split("=")[1], "yellow"))
+        polys.append(parse.parse_polynomial(poly_line.split("=")[1]))
+    return om.OMApplication(list_sym, polys)
 
 def retrieve(name):
     # cut off the final symbol which is newline
@@ -78,6 +84,7 @@ def ring_ctor(ring_name, variables):
 
 def poly_ctor(poly_name, terms, ring):
     command = "poly " + poly_name + " = "
+    print(colored(str(ring), "blue"))
     for term in terms:
         for i in range(1, len(ring.arguments)):
             command += str(term.arguments[i-1].integer)
@@ -85,6 +92,18 @@ def poly_ctor(poly_name, terms, ring):
         command += str(term.arguments[-1].integer)
         command += "+"
     # to remove the last plus
+    command = command[:-1]
+    command += ";"
+    sing.RunSingularCommand(command)
+
+def poly_ctor_1(poly_name, terms, varnames):
+    command = "poly " + poly_name + " = "
+    for term in terms:
+        for i in range(0, len(varnames)):
+            command += str(term.arguments[i].integer)
+            command += varnames[i]
+        command += str(term.arguments[-1].integer)
+        command += "+"
     command = command[:-1]
     command += ";"
     sing.RunSingularCommand(command)
@@ -126,11 +145,25 @@ def ideal(name, data):
     sing.RunSingularCommand("ideal " + name + " = ideal(p)")
 
 def groebner(name, data):
-    poly = poly_info(data)
-    ring_ctor("r", poly.variables)
-    poly_ctor("p", poly.terms, poly.ring)
+    polys = []
+    data = data[0]
+    variables = []
+    for poly_data in data.arguments:
+        polys.append(poly_info(poly_data))
+        for v in poly_info(poly_data).variables:
+            if v not in variables:
+                variables.append(v)
+    ring_ctor("r", variables)
 
-    sing.RunSingularCommand("ideal " + name + " = groebner(p)")
+    arg_str = ""
+    for i in range(0, len(polys)):
+        s = "p" + str(i)
+        poly_ctor(s, polys[i].terms, polys[i].ring)
+        arg_str += s
+        arg_str += ","
+    arg_str = arg_str[:-1]
+
+    sing.RunSingularCommand("ideal " + name + " = groebner(" + arg_str + ");")
 
 def dimension(data):
     poly = poly_info(data)
@@ -233,6 +266,7 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
         head = data.arguments[0]
         return conv.to_openmath((head.cd == 'scscp_trans_1' and head.name in CD_SCSCP_TRANS)
                                     or (head.cd == 'scscp2' and head.name in CD_SCSCP2)
+                                    or (head.cd == 'singular'and head.name in CD_SINGULAR)
                                     or head.cd == 'scscp1')
 
     def get_service_description(self, data):
@@ -241,6 +275,14 @@ class SCSCPRequestHandler(socketserver.BaseRequestHandler):
                                              self.server.description)
 
     def get_signature(self, data):
+        print(colored(str(data), "blue"))
+        if data.arguments[0].name == "groebner":
+            sig_sym = om.OMSymbol("signature", "scscp2")
+            func_sym = om.OMSymbol("groebner", "singular")
+            zero_sym = om.OMInteger(0)
+            infinity_sym = om.OMSymbol("infinity", "nums1")
+            all_set_sym = om.OMSymbol("symbol_set_all", "scscp2")
+            return om.OMApplication(sig_sym, [func_sym, zero_sym, infinity_sym, all_set_sym])
         return om.OMApplication(om.OMSymbol("symbol_set", "scscp2"), [])
 
 class Server(socketserver.ThreadingMixIn, socketserver.TCPServer, object):

@@ -76,7 +76,14 @@ def parse_term(tokens):
             pass
         if v == "+":
             break
-        exp = int(tokens.popleft())
+        try:
+            token = tokens.popleft()
+            exp = int(token)
+        except ValueError:
+            tokens.appendleft(token)
+            exp = 1
+        except IndexError:
+            exp = 1
         if exp < 0:
             raise Exception
         term[v] = exp
@@ -119,6 +126,8 @@ def parse_polynomial(poly_str):
 def poly_to_str(poly):
     poly_str = ""
     for term in poly.arguments[1].arguments:
+        if term.arguments[0].integer == 0:
+            continue
         if term.arguments[0].integer == 1:
             pass
         elif term.arguments[0].integer == -1:
@@ -127,8 +136,10 @@ def poly_to_str(poly):
             poly_str = poly_str + str(term.arguments[0].integer)
             
         for i in range(1, len(poly.arguments[0].arguments)):
-            poly_str = poly_str + poly.arguments[0].arguments[i].name
-            poly_str = poly_str + str(term.arguments[i].integer)
+            if term.arguments[i].integer != 0:
+                poly_str = poly_str + poly.arguments[0].arguments[i].name
+                if term.arguments[i].integer != 1:
+                    poly_str = poly_str + str(term.arguments[i].integer)
             if i == len(poly.arguments[0].arguments) - 1:
                 poly_str = poly_str + "+"
     poly_str = poly_str[:-1]
