@@ -261,7 +261,7 @@ if __name__ == '__main__':
     srv = Server(logger=logger)
 
     #sing.InitializeSingular("/usr/bin/Singular")
-    sing.InitializeSingular("/usr/bin/Singular")
+    sing.InitializeSingular("/usr/local/bin/Singular")
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

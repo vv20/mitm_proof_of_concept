@@ -21,7 +21,7 @@ COPY ControllingClient.py ControllingClient.py
 COPY gap_server.g gap_server.g
 COPY mitm_server.msl mitm_server.msl
 COPY poly_parsing.py poly_parsing.py
-COPY singular_server.py singular_server.py
+COPY docker_singular_server.py singular_server.py
 COPY docker_system.sh system.sh
 COPY QueryingClient.ipynb QueryingClient.ipynb
 
