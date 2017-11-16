@@ -9,6 +9,7 @@ RUN sudo add-apt-repository ppa:fkrull/deadsnakes
 RUN sudo apt-get update
 RUN sudo apt-get install -y libxml2-dev libxslt1-dev python3.5 python3-pip python3.5-dev bc openjdk-8-jre sbt
 RUN sudo ln -sf /usr/bin/python3.5 /usr/bin/python3
+RUN sudo ln -sf /usr/bin/python3.5 /usr/bin/python
 RUN sudo pip3 install --upgrade pip
 RUN sudo pip3 install PySingular scscp termcolor jupyter
 RUN sudo update-java-alternatives --set /usr/lib/jvm/java-1.8.0-openjdk-amd64
