@@ -18,10 +18,10 @@ from termcolor import colored
 false_sym = om.OMSymbol("false", "logic1")
 true_sym = om.OMSymbol("true", "logic1")
 int_ring_sym = om.OMSymbol("integers", "ring3")
-sdmp_sym = om.OMSymbol("SDMP", "polyd")
-term_sym = om.OMSymbol("term", "polyd")
-poly_ring_sym = om.OMSymbol("poly_ring_d_named", "polyd")
-dmp_sym = om.OMSymbol("DMP", "polyd")
+sdmp_sym = om.OMSymbol("SDMP", "polyd1")
+term_sym = om.OMSymbol("term", "polyd1")
+poly_ring_sym = om.OMSymbol("poly_ring_d_named", "polyd1")
+dmp_sym = om.OMSymbol("DMP", "polyd1")
 
 def makename():
     name = ""
